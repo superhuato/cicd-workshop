@@ -1,0 +1,45 @@
+services:
+  postgres:
+    image: postgres:16.0-alpine
+    container_name: workshop-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: workshop
+      POSTGRES_PASSWORD: workshop
+      POSTGRES_DB: workshop
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U workshop"]
+      interval: 30s
+      timeout: 3s
+      start_period: 40s
+      retries: 3
+    networks:
+      - workshop-net
+
+
+  app:
+    build: .
+    container_name: workshop-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/workshop
+      DB_USER: workshop
+      DB_PASSWORD: workshop
+    ports:
+      - "8000:8000"
+    networks:
+      - workshop-net
+
+volumes:
+  postgres_data:
+
+networks:
+  workshop-net:
+    driver: bridge
