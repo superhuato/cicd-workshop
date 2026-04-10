@@ -1,26 +1,24 @@
 #==== Stage 1: Build
 FROM eclipse-temurin:21-jdk-alpine as builder
-
 WORKDIR /build
-
 COPY mvnw .
 COPY .mvn .mvn
 COPY pom.xml .
-
 RUN chmod +x mvnw && ./mvnw dependency:go-offline -B
-
 COPY src src
 RUN ./mvnw clean package -DskipTests -B
 
 #==== Stage 2: Runtime
 FROM eclipse-temurin:21-jre-alpine
 
+# --- จุดที่แบลแนะนำเพิ่ม ---
+# อัปเกรด package ใน OS เพื่อปิดช่องโหว่ที่มากับ Base Image
+RUN apk update && apk upgrade --no-cache
+# ------------------------
+
 RUN addgroup -S spring && adduser -S spring -G spring
-
 WORKDIR /app
-
 COPY --from=builder /build/target/*.jar app.jar
-
 RUN chown spring:spring app.jar
 USER spring
 
