@@ -64,7 +64,7 @@ jobs:
           format: 'HTML'
           args: >
             --failOnCVSS 7
-            --enableRetired
+            --enableRetireJS
 
       - name: Upload report
         if: always()
