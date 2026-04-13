@@ -20,8 +20,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # ✅ แก้: ย้าย setup-java ขึ้นมาก่อน Initialize CodeQL
-      # เพราะ CodeQL ต้องรู้จัก Java toolchain ตั้งแต่ init phase
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
@@ -48,8 +46,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # ✅ แก้: ลบ env: JAVA_HOME ออก — actions/setup-java จัดการให้เองอยู่แล้ว
-      # การใส่ JAVA_HOME แบบ hardcode ทำให้ path ไม่ตรงกับที่ action ติดตั้งจริง
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
@@ -57,18 +53,23 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
+      - name: Install OWASP Dependency-Check CLI
+        run: |
+          VERSION=10.0.4
+          curl -sSL "https://github.com/jeremylong/DependencyCheck/releases/download/v${VERSION}/dependency-check-${VERSION}-release.zip" -o dc.zip
+          unzip -q dc.zip
+          chmod +x dependency-check/bin/dependency-check.sh
+
       - name: Run Dependency Check
-        uses: dependency-check/Dependency-Check_Action@main
-        with:
-          project: 'cicd-workshop'
-          path: '.'
-          format: 'HTML'
-          # ✅ แก้: เพิ่ม out: 'reports' ให้ตรงกับ upload-artifact path ด้านล่าง
-          # ✅ แก้: ลบ --noupdate ออก เพื่อให้ดาวน์โหลด NVD database (จำเป็นสำหรับ scan ที่แม่นยำ)
-          out: 'reports'
-          args: >
-            --failOnCVSS 7
-            --enableRetireJS
+        run: |
+          ./dependency-check/bin/dependency-check.sh \
+            --project "cicd-workshop" \
+            --scan "." \
+            --format HTML \
+            --out reports \
+            --failOnCVSS 7 \
+            --enableRetireJS \
+            --nvdApiKey ${{ secrets.NVD_API_KEY }}
 
       - name: Upload report
         if: always()
@@ -101,9 +102,6 @@ jobs:
       - name: Build image for scanning
         run: docker build -t scan-target:${{ github.sha }} .
 
-      # ✅ แก้: เปลี่ยน exit-code เป็น '0' และใช้ continue-on-error: true
-      # เหตุผล: exit-code: '1' ทำให้ step นี้ fail ก่อนที่ upload-sarif จะทำงาน
-      # ทำให้ผลสแกนไม่ถูกส่งขึ้น Security tab เลย
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         continue-on-error: true
