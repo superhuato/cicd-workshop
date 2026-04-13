@@ -15,6 +15,11 @@ public class BookController {
         this.bookRepository = bookRepository;
     }
 
+    @GetMapping("/count")
+    public long count() {
+        return bookRepository.count();
+    }
+
     @GetMapping
     public List<Book> getAllBooks() {
         return bookRepository.findAll();
