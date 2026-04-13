@@ -67,8 +67,7 @@ jobs:
             --scan "." \
             --format HTML \
             --out reports \
-            --failOnCVSS 7 \
-            --nvdApiKey ${{ secrets.NVD_API_KEY }}
+            --failOnCVSS 7
 
       - name: Upload report
         if: always()
