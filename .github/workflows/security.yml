@@ -55,13 +55,12 @@ jobs:
           cache: maven
 
       - name: Run Dependency Check
-        uses: dependency-check/Dependency-Check_Action@main
-        env:
-          JAVA_HOME: "" # ล้างค่าเพื่อให้ใช้ตัวใน Container
+        uses: dependency-check/Dependency-Check_Action@v3.0.0
         with:
           project: 'cicd-workshop'
           path: '.'
           format: 'HTML'
+          out: 'reports'
           args: >
             --failOnCVSS 7
             --enableRetireJS
